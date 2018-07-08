@@ -4,13 +4,13 @@ const { mongoose } = require('./../server/db/mongoose')
 const { Todo } = require('./../server/models/todo')
 const { User } = require('./../server/models/user')
 
-var id = '5b419be047cc5e3a5cc8eb70'
+var id = '5b41cc7159cb7936fccc0e8d'
 
 if (!ObjectID.isValid(id)) console.log('ID not Valid')
 
 
 
-User.findById(id)
+Todo.findById(id)
     .then((user) => {
         if (!user) return console.log('ERROR: Unable to find user by that id.')
         console.log('Todo ById:', user)

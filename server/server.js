@@ -36,7 +36,8 @@ app.get('/todos', (req, res) => {
 app.get('/todo/:id', (req, res) => {
     var id = req.params.id
     console.log('id requested:', id)
-    if (!ObjectID.isValid(id)) console.log('ID not Valid')
+    if (!ObjectID.isValid(id)) return res.status(404).send()  //console.log('ID not Valid')
+
     Todo.findById(id)
         .then((todo) => {
             if (!todo) return res.status(404).send() // console.log("No Todo returned")
@@ -46,10 +47,26 @@ app.get('/todo/:id', (req, res) => {
         })
 })
 
+app.delete('/todo/:id', (req, res) => {
+    var id = req.params.id
+    if (!ObjectID(id)) return res.status(404).send()  // console.log('Not a Valid ID ')
+
+    Todo.findByIdAndRemove(id)
+        .then((todo) => {
+            if (!todo) return res.status(404).send()  // console.log('ERROR: Unable to find user by that id.')
+            console.log('Todo removed:', todo)
+            res.send({msg:'Todo removed:', todo_: todo})
+        })
+        .catch((e) => res.status(400).send() )  // console.log("-ERROR: ", e))
+
+})
+
+
+
 
 app.listen(port, () => {
-    console.log(`Started server on port ${port}`)
-})
+        console.log(`Started server on port ${port}`)
+    })
 
 module.exports = { app }
 
