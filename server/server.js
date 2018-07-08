@@ -1,5 +1,6 @@
 var express = require('express')
 var bodyParser = require('body-parser')
+const { ObjectID } = require('mongodb')
 
 var { mongoose } = require('./db/mongoose')
 var { User } = require('./models/user')
@@ -14,19 +15,34 @@ app.post('/todo', (req, res) => {
     var todo = new Todo({
         text: req.body.text
     })
-    todo.save().then((doc) => {
-        res.send(doc)
-    }, (e) => {
-        res.status(400).send(e)
-    })
+    todo.save()
+        .then((doc) => {
+            res.send(doc)
+        }, (e) => {
+            res.status(400).send(e)
+        })
 })
 
-app.get('/todo', (req, res) => {
-    Todo.find().then((todo) => {
-        res.send({ todo })
-    }, (e) => {
-        res.status(400).send(e)
-    })
+app.get('/todos', (req, res) => {
+    Todo.find()
+        .then((todo) => {
+            res.send({ todo })
+        }, (e) => {
+            res.status(400).send(e)
+        })
+})
+
+app.get('/todo/:id', (req, res) => {
+    var id = req.params.id
+    console.log('id requested:', id)
+    if (!ObjectID.isValid(id)) console.log('ID not Valid')
+    Todo.findById(id)
+        .then((todo) => {
+            if (!todo) return res.status(404).send() // console.log("No Todo returned")
+            res.send({ todo })
+        }, (e) => {
+            res.status(400).send()
+        })
 })
 
 

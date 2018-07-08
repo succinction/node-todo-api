@@ -1,4 +1,4 @@
-const {MongoClient, Object} = require('mongodb')
+const {MongoClient} = require('mongodb')
 
 MongoClient.connect('mongodb://localhost:27017/TodoApp', {useNewUrlParser: true}, (err, client) => {
     if (err) return console.log("ERROR: could not connect to the database.<<<:", err)
