@@ -61,11 +61,11 @@ app.patch('/todo/:id', (req, res) => {
         body.completed = false
         body.completedAt = null
     }
-  
-    Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
-        if (!todo) return res.status(404).send() 
-        res.send({todo})
-    } )
+
+    Todo.findByIdAndUpdate(id, { $set: body }, { new: true }).then((todo) => {
+        if (!todo) return res.status(404).send()
+        res.send({ todo })
+    })
 })
 
 app.delete('/todo/:id', (req, res) => {
@@ -81,6 +81,28 @@ app.delete('/todo/:id', (req, res) => {
 
 })
 
+///////////////////////////////////////////////////// USER ///////////////////////////////////
+
+
+app.post('/user', (req, res) => {
+    console.log(req.body)
+    var body = _.pick(req.body, ['email', 'password'])
+    var user = new User(body)
+
+    user.save().then(() => {
+        return user.generateAuthToken()
+        // res.send(user)
+    }).then((token) => {
+        res.header('x-auth', token).send(user)
+    }).catch((e) => {
+        res.status(400).send(e)
+    })
+})
+
+
+
+
+///////////////////////////////////////////////////// LISTEN
 app.listen(port, () => {
     console.log(`Started server on port ${port}`)
 })
