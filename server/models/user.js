@@ -55,33 +55,34 @@ UserSchema.methods.generateAuthToken = function () {
     })
 }
 
+UserSchema.methods.removeToken = function (token) {
+    var user = this
 
+    return user.update({
+        $pull: {
+            tokens: { token }
+        }
+    })
+}
+
+///////////////////////////////////////////////////////
 UserSchema.statics.findByToken = function (token) {
     var User = this
     var decoded
-
     try {
         decoded = jwt.verify(token, 'secret_salt')
     } catch (e) {
         console.log("ERROR:", e)
-        // return new Promise((resolve, reject) => {
-        //     reject()
-        // })
         return Promise.reject()
     }
-
     return User.findOne({
         _id: decoded._id,
         'tokens.token': token,
         'tokens.access': 'auth'
     })
-
 }
 
-
 ///////////////////////////////////////////////////////////////////////
-
-
 UserSchema.statics.findByCredentials = function (email, password) {
     User = this
     console.log(email)
@@ -96,19 +97,13 @@ UserSchema.statics.findByCredentials = function (email, password) {
             bcryptjs.compare(password, user.password, (err, res) => {
                 if (res) {
                     resolve(user)
-                } else  {
+                } else {
                     reject()
                 }
             })
-
-
-
         })
     })
-
 }
-
-
 
 ///////////////////////////////////////////////////////////////////////
 UserSchema.pre('save', function (next) {
@@ -129,9 +124,6 @@ UserSchema.pre('save', function (next) {
     }
 
 })
-
-
-
 
 var User = mongoose.model('User', UserSchema)
 
