@@ -15,10 +15,11 @@ const port = process.env.PORT || 3000
 
 app.use(bodyParser.json())
 
-app.post('/todo', (req, res) => {
+app.post('/todo', authenticate, (req, res) => {
     console.log(req.body)
     var todo = new Todo({
-        text: req.body.text
+        text: req.body.text,
+        _creator: req.user._id
     })
     todo.save()
         .then((doc) => {
@@ -28,8 +29,10 @@ app.post('/todo', (req, res) => {
         })
 })
 
-app.get('/todos', (req, res) => {
-    Todo.find()
+app.get('/todos', authenticate, (req, res) => {
+    Todo.find({
+        _creator: req.user._id
+    })
         .then((todo) => {
             res.send({ todo })
         }, (e) => {
@@ -37,12 +40,15 @@ app.get('/todos', (req, res) => {
         })
 })
 
-app.get('/todo/:id', (req, res) => {
+app.get('/todo/:id', authenticate, (req, res) => {
     var id = req.params.id
     console.log('id requested:', id)
     if (!ObjectID.isValid(id)) return res.status(404).send()  //console.log('ID not Valid')
 
-    Todo.findById(id)
+    Todo.findOne({
+        _id: id,
+        _creator: req.user._id
+    })
         .then((todo) => {
             if (!todo) return res.status(404).send() // console.log("No Todo returned")
             res.send({ todo })
@@ -51,7 +57,23 @@ app.get('/todo/:id', (req, res) => {
         })
 })
 
-app.patch('/todo/:id', (req, res) => {
+app.delete('/todo/:id', authenticate, (req, res) => {
+    var id = req.params.id
+    if (!ObjectID(id)) return res.status(404).send()  // console.log('Not a Valid ID ')
+
+    Todo.findOneAndRemove({
+        _id: id,
+        _creator: req.user._id
+    })
+        .then((todo) => {
+            if (!todo) return res.status(404).send()  // console.log('ERROR: Unable to find user by that id.')
+            console.log('Todo removed:', todo)
+            res.send({ msg: 'Todo removed:', todo_: todo })
+        }).catch((e) => res.status(400).send())  // console.log("-ERROR: ", e))
+
+})
+
+app.patch('/todo/:id', authenticate, (req, res) => {
     var id = req.params.id
     var body = _.pick(req.body, ['text', 'completed'])
     if (!ObjectID.isValid(id)) return res.status(404).send()  //console.log('ID not Valid')
@@ -63,23 +85,10 @@ app.patch('/todo/:id', (req, res) => {
         body.completedAt = null
     }
 
-    Todo.findByIdAndUpdate(id, { $set: body }, { new: true }).then((todo) => {
+    Todo.findOneAndUpdate({ _id: id, _creator: req.user._id }, { $set: body }, { new: true }).then((todo) => {
         if (!todo) return res.status(404).send()
         res.send({ todo })
     })
-})
-
-app.delete('/todo/:id', (req, res) => {
-    var id = req.params.id
-    if (!ObjectID(id)) return res.status(404).send()  // console.log('Not a Valid ID ')
-
-    Todo.findByIdAndRemove(id)
-        .then((todo) => {
-            if (!todo) return res.status(404).send()  // console.log('ERROR: Unable to find user by that id.')
-            console.log('Todo removed:', todo)
-            res.send({ msg: 'Todo removed:', todo_: todo })
-        }).catch((e) => res.status(400).send())  // console.log("-ERROR: ", e))
-
 })
 
 ///////////////////////////////////////////////////// USER ///////////////////////////////////
@@ -118,7 +127,7 @@ app.post('/users/login', (req, res) => {
 
 //////////////////////////////////////////////////////////////////////
 app.delete('/users/me/token', authenticate, (req, res) => {
-    req.user.removeToken(req.token).then(()=>{
+    req.user.removeToken(req.token).then(() => {
         res.status(200).send()
     }, () => {
         res.status(400).send()
